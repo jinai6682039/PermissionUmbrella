@@ -17,7 +17,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 import static com.google.auto.common.MoreElements.getPackage;
-import static fdd.permission.provider.ConstantsProvider.GENERATED_CLASS_SUFFIX;
 import static fdd.permission.utils.CheckUtil.checkSubOfType;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -31,6 +30,8 @@ public final class BinderSet {
     public static final String VIEW_TYPE = "android.view.View";
     public static final String ACTIVITY_TYPE = "android.app.Activity";
     public static final String DIALOG_TYPE = "android.app.Dialog";
+    public static final String FRAGMENT_TYPE = "android.support.v4.app.Fragment";
+    public static final ClassName APPCOMPAT_ACTIVITY = ClassName.get("android.support.v4.app", "AppCompatActivity");
 
     public static final ClassName ACP_OPTIONS = ClassName.get("com.fangdd.mobile.permission", "AcpOptions");
     public static final ClassName ACP = ClassName.get("com.fangdd.mobile.permission", "Acp");
@@ -61,10 +62,12 @@ public final class BinderSet {
     public static final ClassName CONTEXT_COMPAT =
             ClassName.get("android.support.v4.content", "ContextCompat");
 
+    public static final String GENERATED_CLASS_SUFFIX = "_PermissionAllocater";
+
     private final TypeName targetTypeName;
     private final ClassName binderClassName;
     private final boolean isFinal;
-    private final boolean isView;
+    private final boolean isFragment;
     private final boolean isActivity;
     private final boolean isDialog;
 
@@ -73,13 +76,13 @@ public final class BinderSet {
     private Set<MethodBinder> permissionAlloctionDenyMethods;
 
     private BinderSet(TypeName typeName, ClassName binderClassName, boolean isFinal,
-                      boolean isActivity, boolean isDialog, boolean isView, BinderSet parentBinding,
+                      boolean isActivity, boolean isDialog, boolean isFragment, BinderSet parentBinding,
                       Set<MethodBinder> permissionAlloctionMethods, Set<MethodBinder> permissionAlloctionDenyMethods) {
         this.targetTypeName = typeName;
         this.binderClassName = binderClassName;
         this.isFinal = isFinal;
         this.isActivity = isActivity;
-        this.isView = isView;
+        this.isFragment = isFragment;
         this.isDialog = isDialog;
         this.parentBinding = parentBinding;
         this.permissionAlloctionMethods = permissionAlloctionMethods;
@@ -107,15 +110,16 @@ public final class BinderSet {
 
         result.addSuperinterface(PERMISSION_ALLOCATER);
 
-        if (isActivity) {
+        if (isActivity || isFragment) {
             result.addField(targetTypeName, "target", PRIVATE);
         }
 
-        if (isActivity) {
+        if (isActivity || isFragment) {
             result.addMethod(createBinderConstructorForActivity());
         }
 
         result.addMethod(initAllocaterMethod());
+
         for (MethodBinder binder : permissionAlloctionMethods) {
             result.addMethod(createPermissionAllocaterMethod(binder));
         }
@@ -225,7 +229,8 @@ public final class BinderSet {
         sb.append(buildDenyMethod(getPermissionDenyMethod(methodBinder)));
         sb.append("                    }\n" +
                 "                })");
-        return sb.toString();
+
+        return isFragment ? (sb.toString().replace("(target)", "(target.getActivity())")) : sb.toString();
     }
 
     private MethodBinder getPermissionDenyMethod(MethodBinder methodBinder) {
@@ -265,7 +270,7 @@ public final class BinderSet {
     public static Builder newBuilder(TypeElement enclosingElement) {
         TypeMirror typeMirror = enclosingElement.asType();
 
-        boolean isView = checkSubOfType(typeMirror, VIEW_TYPE);
+        boolean isFragment = checkSubOfType(typeMirror, FRAGMENT_TYPE);
         boolean isActivity = checkSubOfType(typeMirror, ACTIVITY_TYPE);
         boolean isDialog = checkSubOfType(typeMirror, DIALOG_TYPE);
 
@@ -280,14 +285,14 @@ public final class BinderSet {
 
         ClassName binderClassName = ClassName.get(packageName, className + GENERATED_CLASS_SUFFIX);
         boolean isFinal = enclosingElement.getModifiers().contains(Modifier.FINAL);
-        return new Builder(targetType, binderClassName, isFinal, isView, isActivity, isDialog);
+        return new Builder(targetType, binderClassName, isFinal, isFragment, isActivity, isDialog);
     }
 
     public static final class Builder {
         private final TypeName targetTypeName;
         private final ClassName binderClassName;
         private final boolean isFinal;
-        private final boolean isView;
+        private final boolean isFragment;
         private final boolean isActivity;
         private final boolean isDialog;
 
@@ -296,12 +301,12 @@ public final class BinderSet {
         private BinderSet parentBinding;
 
         private Builder(TypeName targetTypeName, ClassName binderClassName, boolean isFinal,
-                        boolean isView, boolean isActivity, boolean isDialog) {
+                        boolean isFragment, boolean isActivity, boolean isDialog) {
             this.targetTypeName = targetTypeName;
             this.binderClassName = binderClassName;
             this.isFinal = isFinal;
             this.isActivity = isActivity;
-            this.isView = isView;
+            this.isFragment = isFragment;
             this.isDialog = isDialog;
             this.permissionAlloctionMethods = new LinkedHashSet<>();
             this.permissionAlloctionDenyMethods = new LinkedHashSet<>();
@@ -321,7 +326,7 @@ public final class BinderSet {
         }
 
         public BinderSet build() {
-            return new BinderSet(targetTypeName, binderClassName, isFinal, isActivity, isDialog, isView,
+            return new BinderSet(targetTypeName, binderClassName, isFinal, isActivity, isDialog, isFragment,
                     parentBinding, permissionAlloctionMethods, permissionAlloctionDenyMethods);
         }
     }
@@ -338,8 +343,8 @@ public final class BinderSet {
         return binderClassName;
     }
 
-    public boolean isView() {
-        return isView;
+    public boolean isFragment() {
+        return isFragment;
     }
 
     public boolean isFinal() {

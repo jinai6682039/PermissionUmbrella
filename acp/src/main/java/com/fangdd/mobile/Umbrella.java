@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.annotation.VisibleForTesting;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import java.lang.reflect.Constructor;
@@ -31,14 +32,20 @@ public class Umbrella {
     @NonNull
     @UiThread
     public static PermissionUmbrella allocation(@NonNull Activity activity) {
-        return createBinding(activity, activity);
+        return createBinding(activity);
+    }
+
+    @NonNull
+    @UiThread
+    public static PermissionUmbrella allocation(@NonNull Fragment fragment) {
+        return createBinding(fragment);
     }
 
     public static void setDebug(boolean debug) {
         Umbrella.debug = debug;
     }
 
-    private static PermissionUmbrella createBinding(@NonNull Object target, @NonNull Context source) {
+    private static PermissionUmbrella createBinding(@NonNull Object target) {
         Class<?> targetClass = target.getClass();
         if (debug) {
             Log.e(TAG, "Looking up binding for " + targetClass.getName());

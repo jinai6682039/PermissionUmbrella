@@ -2,6 +2,7 @@ package com.example.hanxu.mypermission;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -16,9 +17,7 @@ import com.fangdd.mobile.Umbrella;
 
 import java.util.List;
 
-public class MainActivity extends Activity {
-
-    PermissionUmbrella allocation;
+public class MainActivity extends BaseActivity {
 
     public static final String[] permissions = new String[]{
             Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -29,6 +28,7 @@ public class MainActivity extends Activity {
 
     TextView textView;
     TextView textView1;
+    TextView textView2;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -36,13 +36,12 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        allocation = Umbrella.allocation(this);
+    public void init() {
         setContentView(R.layout.activity_main);
 
         textView = (TextView) findViewById(R.id.test);
         textView1 = (TextView) findViewById(R.id.test1);
+        textView2 = (TextView) findViewById(R.id.test2);
         textView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,6 +52,12 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 allocation.invokePermission(1);
+            }
+        });
+        textView2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyFragmentActivity.toHere(mContext);
             }
         });
     }

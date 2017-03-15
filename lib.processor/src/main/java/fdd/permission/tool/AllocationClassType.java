@@ -1,6 +1,6 @@
 package fdd.permission.tool;
 
-import fdd.permission.provider.ConstantsProvider;
+import fdd.permission.binder.BinderSet;
 
 /**
  * Created by hanxu on 2017/3/6.
@@ -18,9 +18,9 @@ public enum  AllocationClassType {
     }
 
     public static AllocationClassType getAllocationClassType(String className, TypeResolver typeResolver) {
-        if (typeResolver.isSubTypeOf(className, ConstantsProvider.ACTIVITY)) {
+        if (typeResolver.isSubTypeOf(className, BinderSet.ACTIVITY_TYPE)) {
             return ACTIVITY;
-        } else if (typeResolver.isSubTypeOf(className, ConstantsProvider.FRAGMENT)){
+        } else if (typeResolver.isSubTypeOf(className, BinderSet.FRAGMENT_TYPE)){
             return FRAGMENT;
         }
         return null;
