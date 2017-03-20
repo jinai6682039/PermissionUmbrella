@@ -19,6 +19,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
@@ -47,11 +48,13 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import javax.xml.bind.Binder;
 
 import fdd.permission.binder.BinderSet;
 import fdd.permission.binder.MethodBinder;
 import fdd.permission.binder.Parameter;
 import fdd.permission.exception.MultipleMethodAddException;
+import fdd.permission.exception.SameMethodFlagInParentBinderException;
 import fdd.permission.exception.WriteJavaFileFailureException;
 import fdd.permission.utils.ProcesserUtil;
 
@@ -80,6 +83,10 @@ public class PermissionAllocationProcessor extends AbstractProcessor {
         for (Map.Entry<TypeElement, BinderSet> entry : binderSetMap.entrySet()) {
             TypeElement typeElement = entry.getKey();
             BinderSet binderSet = entry.getValue();
+
+            if (findSameMethodFlagInParentBinderSet(binderSet)) {
+                throw new SameMethodFlagInParentBinderException(binderSet);
+            }
 
             JavaFile javaFile = binderSet.generateJava(1);
 
@@ -270,42 +277,43 @@ public class PermissionAllocationProcessor extends AbstractProcessor {
         }
     }
 
-    private void scanForRClasses(RoundEnvironment env) {
-        if (trees == null)
-            return;
+    private boolean findSameMethodFlagInParentBinderSet(BinderSet binderSet) {
+        if (binderSet.getParentBinding() == null) {
+            return false;
+        }
 
+        BinderSet parentBinding = binderSet.getParentBinding();
 
-    }
-
-    private static class RClassScanner extends TreeScanner {
-        // Maps the currently evaulated rPackageName to R Classes
-        private final Map<String, Set<String>> rClasses = new LinkedHashMap<>();
-        private String currentPackageName;
-
-        @Override
-        public void visitSelect(JCTree.JCFieldAccess jcFieldAccess) {
-            //
-            Symbol symbol = jcFieldAccess.sym;
-            if (symbol != null
-                    && symbol.getEnclosingElement() != null
-                    && symbol.getEnclosingElement().getEnclosingElement() != null
-                    && symbol.getEnclosingElement().getEnclosingElement().enclClass() != null) {
-                Set<String> rClassSet = rClasses.get(currentPackageName);
-                if (rClassSet == null) {
-                    rClassSet = new HashSet<>();
-                    rClasses.put(currentPackageName, rClassSet);
-                }
-                // won't add same class name repeatly.
-                rClassSet.add(symbol.getEnclosingElement().getEnclosingElement().enclClass().className());
+        while(parentBinding != null) {
+            if (findSameMethodFlagInParentBinderSet(binderSet, parentBinding)) {
+                return true;
+            }
+            else {
+                parentBinding = parentBinding.getParentBinding();
             }
         }
 
-        Map<String, Set<String>> getRClasses() {
-            return rClasses;
-        }
+        return false;
+    }
 
-        void setCurrentPackageName(String respectivePackageName) {
-            this.currentPackageName = respectivePackageName;
+    private List<Integer> getBinderSetMethodFlags(BinderSet binderSet) {
+        List<Integer> methodFlags = new ArrayList<>();
+        for (MethodBinder binder : binderSet.getPermissionAlloctionMethods()) {
+            methodFlags.add(binder.getMethodFlag());
         }
+        return methodFlags;
+    }
+
+    private boolean findSameMethodFlagInParentBinderSet(BinderSet binderSet, BinderSet parentBinderSet) {
+
+        List<Integer> myMethodFlags = getBinderSetMethodFlags(binderSet);
+        List<Integer> parentMethodFlag = getBinderSetMethodFlags(parentBinderSet);
+        for (int i : myMethodFlags) {
+            for (int y : parentMethodFlag) {
+                if (i == y)
+                    return true;
+            }
+        }
+        return false;
     }
 }

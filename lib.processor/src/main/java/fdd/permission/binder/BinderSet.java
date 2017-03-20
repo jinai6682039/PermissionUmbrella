@@ -66,6 +66,7 @@ public final class BinderSet {
 
     private final TypeName targetTypeName;
     private final ClassName binderClassName;
+    private final String className;
     private final boolean isFinal;
     private final boolean isFragment;
     private final boolean isActivity;
@@ -75,11 +76,12 @@ public final class BinderSet {
     private Set<MethodBinder> permissionAlloctionMethods;
     private Set<MethodBinder> permissionAlloctionDenyMethods;
 
-    private BinderSet(TypeName typeName, ClassName binderClassName, boolean isFinal,
+    private BinderSet(TypeName typeName, String className, ClassName binderClassName, boolean isFinal,
                       boolean isActivity, boolean isDialog, boolean isFragment, BinderSet parentBinding,
                       Set<MethodBinder> permissionAlloctionMethods, Set<MethodBinder> permissionAlloctionDenyMethods) {
         this.targetTypeName = typeName;
         this.binderClassName = binderClassName;
+        this.className = className;
         this.isFinal = isFinal;
         this.isActivity = isActivity;
         this.isFragment = isFragment;
@@ -106,9 +108,9 @@ public final class BinderSet {
 
         if (parentBinding != null) {
             result.superclass(parentBinding.binderClassName);
+        } else {
+            result.addSuperinterface(PERMISSION_ALLOCATER);
         }
-
-        result.addSuperinterface(PERMISSION_ALLOCATER);
 
         if (isActivity || isFragment) {
             result.addField(targetTypeName, "target", PRIVATE);
@@ -153,7 +155,8 @@ public final class BinderSet {
                 .addParameter(TypeName.INT, METHOD_PARAMETERS_NAME);
 
         builder.addCode("switch(" + METHOD_PARAMETERS_NAME + ") " +
-                "{\n" + buildMethodCase() + "\n} \n");
+                "{\n" + buildMethodCase() + "\n}\n" +
+                buildSuperInvokePermission());
 
         return builder.build();
     }
@@ -261,7 +264,17 @@ public final class BinderSet {
         for (MethodBinder binder : permissionAlloctionMethods) {
             sb.append("    case " + binder.getMethodFlag() + ":\n");
             sb.append("        " + ALLOCATER_METHOD_NAME_PREFIX + binder.getMethodFlag() + "();\n");
-            sb.append("        break;\n");
+            sb.append("        return;\n");
+        }
+
+        return sb.toString();
+    }
+
+    private String buildSuperInvokePermission() {
+        StringBuilder sb = new StringBuilder("");
+
+        if (parentBinding != null) {
+            sb.append("super." + INTERFACE_ALLOCATER_METHOD_NAME + "(" + METHOD_PARAMETERS_NAME + ");\n");
         }
 
         return sb.toString();
@@ -285,12 +298,13 @@ public final class BinderSet {
 
         ClassName binderClassName = ClassName.get(packageName, className + GENERATED_CLASS_SUFFIX);
         boolean isFinal = enclosingElement.getModifiers().contains(Modifier.FINAL);
-        return new Builder(targetType, binderClassName, isFinal, isFragment, isActivity, isDialog);
+        return new Builder(targetType, className, binderClassName, isFinal, isFragment, isActivity, isDialog);
     }
 
     public static final class Builder {
         private final TypeName targetTypeName;
         private final ClassName binderClassName;
+        private final String className;
         private final boolean isFinal;
         private final boolean isFragment;
         private final boolean isActivity;
@@ -300,10 +314,11 @@ public final class BinderSet {
         private Set<MethodBinder> permissionAlloctionDenyMethods;
         private BinderSet parentBinding;
 
-        private Builder(TypeName targetTypeName, ClassName binderClassName, boolean isFinal,
+        private Builder(TypeName targetTypeName, String className, ClassName binderClassName, boolean isFinal,
                         boolean isFragment, boolean isActivity, boolean isDialog) {
             this.targetTypeName = targetTypeName;
             this.binderClassName = binderClassName;
+            this.className = className;
             this.isFinal = isFinal;
             this.isActivity = isActivity;
             this.isFragment = isFragment;
@@ -326,7 +341,7 @@ public final class BinderSet {
         }
 
         public BinderSet build() {
-            return new BinderSet(targetTypeName, binderClassName, isFinal, isActivity, isDialog, isFragment,
+            return new BinderSet(targetTypeName, className, binderClassName, isFinal, isActivity, isDialog, isFragment,
                     parentBinding, permissionAlloctionMethods, permissionAlloctionDenyMethods);
         }
     }
@@ -369,5 +384,9 @@ public final class BinderSet {
 
     public Set<MethodBinder> getPermissionAlloctionDenyMethods() {
         return permissionAlloctionDenyMethods;
+    }
+
+    public String getClassName() {
+        return className;
     }
 }
