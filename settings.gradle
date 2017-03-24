@@ -1,1 +1,1 @@
-include ':sample', ':lib.processor', ':permission.acp', ':lib.annotation'
+include ':sample', ':permissionumbrella-processor', ':permissionumbrella', ':permissionumbrella-annotation'

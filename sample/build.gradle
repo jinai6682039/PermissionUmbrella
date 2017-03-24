@@ -32,6 +32,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.1.0'
     testCompile 'junit:junit:4.12'
 
-    compile project(':permission.acp')
-    annotationProcessor project(":lib.processor")
+//    compile 'com.fangdd.hanxu:permissionumbrella:0.5.0'
+    compile project(':permissionumbrella')
+    annotationProcessor project(':permissionumbrella-processor')
 }

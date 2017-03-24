@@ -8,10 +8,10 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/acp" />
-            <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/lib.annotation" />
-            <option value="$PROJECT_DIR$/lib.processor" />
+            <option value="$PROJECT_DIR$/permissionumbrella" />
+            <option value="$PROJECT_DIR$/permissionumbrella-annotation" />
+            <option value="$PROJECT_DIR$/permissionumbrella-processor" />
+            <option value="$PROJECT_DIR$/sample" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
