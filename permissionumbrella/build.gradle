@@ -32,7 +32,7 @@ dependencies {
     compile 'com.android.support:support-annotations:25.2.0'
     compile 'com.android.support:appcompat-v7:25.2.0'
     testCompile 'junit:junit:4.12'
-    compile project(':permissionumbrella-annotation')
+    compile ('com.fangdd.hanxu:permissionumbrella-annotation:0.6.0')
 }
 
 tasks.withType(JavaCompile) {
@@ -40,7 +40,7 @@ tasks.withType(JavaCompile) {
 }
 
 group = 'com.fangdd.hanxu'
-version = '0.5.0'
+version = '0.6.0'
 
 task generateSourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
@@ -76,9 +76,9 @@ bintray {
         name = 'permissionumbrella'
 
         version {
-            name = '0.5.0'
+            name = '0.6.0'
             desc = 'a apt android permission allocater'
-            vcsTag = '0.5.0'
+            vcsTag = '0.6.0'
         }
 
         licenses = ['Apache-2.0']

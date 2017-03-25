@@ -1,4 +1,6 @@
 apply plugin: 'java'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
 
 def logger = new com.android.build.gradle.internal.LoggerWrapper(project.logger)
 def sdkHandler = new com.android.build.gradle.internal.SdkHandler(project, logger)
@@ -12,7 +14,7 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.squareup:javapoet:1.7.0'
     compile 'com.google.auto.service:auto-service:1.0-rc2'
-    compile project(':permissionumbrella-annotation')
+    compile ('com.fangdd.hanxu:permissionumbrella-annotation:0.6.0')
 
 
     // 使用JcTree等 com.sun.source等包
@@ -25,4 +27,55 @@ targetCompatibility = "1.7"
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
+}
+
+group = 'com.fangdd.hanxu'
+version = '0.6.0'
+
+task generateSourcesJar(type: Jar) {
+    from sourceSets.main.java.srcDirs
+    classifier 'sources'
+}
+
+task generateJavadocs(type: Javadoc) {
+    source = sourceSets.main.java.srcDirs
+//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    options.encoding = "UTF-8"
+}
+
+task generateJavadocsJar(type: Jar, dependsOn: generateJavadocs) {
+    from generateJavadocs.destinationDir
+    classifier 'javadoc'
+}
+
+artifacts {
+    archives generateJavadocsJar
+    archives generateSourcesJar
+}
+
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    pkg {
+        repo = 'Github-maven'
+        name = 'permissionumbrella-processor'
+
+        version {
+            name = '0.6.0'
+            desc = 'permissionumbrella-processor'
+            vcsTag = '0.6.0'
+        }
+
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/jinai6682039/PermissionUmbrella.git'
+        websiteUrl = 'https://github.com/jinai6682039/PermissionUmbrella'
+    }
+
+    configurations = ['archives']
+
 }
