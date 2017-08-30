@@ -1,4 +1,4 @@
-# PermissionUmbrella(jcenter审核中)
+# PermissionUmbrella
 
 一个基于gradle 插件annotationProcessor 的Android 权限分配插件。将方法与权限绑定起来，通过注解自动生成代码，然后使用相应的回调方法来即时申请权限，并执行相应的方法。如果权限被用户拒绝，那也可以提示用户相关权限所需以及执行权限被拒绝时的方法。
 
